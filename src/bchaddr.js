@@ -138,6 +138,18 @@ function toCashAddress (address) {
 }
 
 /**
+ * Translates the given address into cashaddr format.
+ * @static
+ * @param {string} address - A valid Bitcoin Cash address in any format.
+ * @return {string}
+ * @throws {InvalidAddressError}
+ */
+ function toEcashAddress (address) {
+  var decoded = decodeAddress(address)
+  return encodeAsEcashaddr(decoded)
+}
+
+/**
  * Version byte table for base58 formats.
  * @private
  */
@@ -261,7 +273,7 @@ function decodeCashAddress (address) {
     } catch (error) {
     }
   } else {
-    var prefixes = ['bitcoincash', 'bchtest', 'bchreg']
+    var prefixes = ['bitcoincash', 'ecash', 'bchtest', 'bchreg']
     for (var i = 0; i < prefixes.length; ++i) {
       try {
         var prefix = prefixes[i]
@@ -343,6 +355,13 @@ function encodeAsBitpay (decoded) {
  */
 function encodeAsCashaddr (decoded) {
   var prefix = decoded.network === Network.Mainnet ? 'bitcoincash' : 'bchtest'
+  var type = decoded.type === Type.P2PKH ? 'P2PKH' : 'P2SH'
+  var hash = new Uint8Array(decoded.hash)
+  return cashaddr.encode(prefix, type, hash)
+}
+
+function encodeAsEcashaddr (decoded) {
+  var prefix = 'ecash'
   var type = decoded.type === Type.P2PKH ? 'P2PKH' : 'P2SH'
   var hash = new Uint8Array(decoded.hash)
   return cashaddr.encode(prefix, type, hash)
@@ -450,6 +469,7 @@ module.exports = {
   toLegacyAddress: toLegacyAddress,
   toBitpayAddress: toBitpayAddress,
   toCashAddress: toCashAddress,
+  toEcashAddress: toEcashAddress,
   isLegacyAddress: isLegacyAddress,
   isBitpayAddress: isBitpayAddress,
   isCashAddress: isCashAddress,

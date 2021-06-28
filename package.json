@@ -1,6 +1,6 @@
 {
   "name": "bchaddrjs",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "description": "Bitcoin Cash general purpose address translation.",
   "main": "src/bchaddr.js",
   "scripts": {
@@ -58,7 +58,7 @@
   "dependencies": {
     "bs58check": "2.1.2",
     "buffer": "^6.0.3",
-    "cashaddrjs": "0.4.4",
+    "cashaddrjs": "git://github.com/viabtc/cashaddrjs.git#v0.4.5",
     "stream-browserify": "^3.0.0"
   }
 }

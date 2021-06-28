@@ -148,6 +148,7 @@ var toCashAddress = bchaddr.toCashAddress;
 toLegacyAddress('qph5kuz78czq00e3t85ugpgd7xmer5kr7c5f6jdpwk') // 1B9UNtBfkkpgt8kVbwLN9ktE62QKnMbDzR
 toBitpayAddress('1B9UNtBfkkpgt8kVbwLN9ktE62QKnMbDzR') // CScMwvXjdooDnGevHgfHjGWFi9cjk75Aaj
 toCashAddress('1B9UNtBfkkpgt8kVbwLN9ktE62QKnMbDzR') // bitcoincash:qph5kuz78czq00e3t85ugpgd7xmer5kr7c5f6jdpwk
+toEcashAddress('1B9UNtBfkkpgt8kVbwLN9ktE62QKnMbDzR') // ecash:qph5kuz78czq00e3t85ugpgd7xmer5kr7cffffffff
 ```
 
 ## Documentation

@@ -165,6 +165,19 @@ function toCashAddress(address) {
   return encodeAsCashaddr(decoded);
 }
 /**
+ * Translates the given address into cashaddr format.
+ * @static
+ * @param {string} address - A valid Bitcoin Cash address in any format.
+ * @return {string}
+ * @throws {InvalidAddressError}
+ */
+
+
+function toEcashAddress(address) {
+  var decoded = decodeAddress(address);
+  return encodeAsEcashaddr(decoded);
+}
+/**
  * Version byte table for base58 formats.
  * @private
  */
@@ -299,7 +312,7 @@ function decodeCashAddress(address) {
       return decodeCashAddressWithPrefix(address);
     } catch (error) {}
   } else {
-    var prefixes = ['bitcoincash', 'bchtest', 'bchreg'];
+    var prefixes = ['bitcoincash', 'ecash', 'bchtest', 'bchreg'];
 
     for (var i = 0; i < prefixes.length; ++i) {
       try {
@@ -388,6 +401,13 @@ function encodeAsBitpay(decoded) {
 
 function encodeAsCashaddr(decoded) {
   var prefix = decoded.network === Network.Mainnet ? 'bitcoincash' : 'bchtest';
+  var type = decoded.type === Type.P2PKH ? 'P2PKH' : 'P2SH';
+  var hash = new Uint8Array(decoded.hash);
+  return cashaddr.encode(prefix, type, hash);
+}
+
+function encodeAsEcashaddr(decoded) {
+  var prefix = 'ecash';
   var type = decoded.type === Type.P2PKH ? 'P2PKH' : 'P2SH';
   var hash = new Uint8Array(decoded.hash);
   return cashaddr.encode(prefix, type, hash);
@@ -502,6 +522,7 @@ module.exports = {
   toLegacyAddress: toLegacyAddress,
   toBitpayAddress: toBitpayAddress,
   toCashAddress: toCashAddress,
+  toEcashAddress: toEcashAddress,
   isLegacyAddress: isLegacyAddress,
   isBitpayAddress: isBitpayAddress,
   isCashAddress: isCashAddress,
@@ -4510,7 +4531,7 @@ var ValidationError = validation.ValidationError;
  *
  * @private
  */
-var VALID_PREFIXES = ['bitcoincash', 'bchtest', 'bchreg'];
+var VALID_PREFIXES = ['bitcoincash', 'ecash', 'bchtest', 'bchreg'];
 
 /**
  * Checks whether a string is a valid prefix; ie., it has a single letter case
@@ -5494,31 +5515,52 @@ function unwrapListeners(arr) {
 
 function once(emitter, name) {
   return new Promise(function (resolve, reject) {
-    function eventListener() {
-      if (errorListener !== undefined) {
+    function errorListener(err) {
+      emitter.removeListener(name, resolver);
+      reject(err);
+    }
+
+    function resolver() {
+      if (typeof emitter.removeListener === 'function') {
         emitter.removeListener('error', errorListener);
       }
       resolve([].slice.call(arguments));
     };
-    var errorListener;
 
-    // Adding an error listener is not optional because
-    // if an error is thrown on an event emitter we cannot
-    // guarantee that the actual event we are waiting will
-    // be fired. The result could be a silent way to create
-    // memory or file descriptor leaks, which is something
-    // we should avoid.
+    eventTargetAgnosticAddListener(emitter, name, resolver, { once: true });
     if (name !== 'error') {
-      errorListener = function errorListener(err) {
-        emitter.removeListener(name, eventListener);
-        reject(err);
-      };
-
-      emitter.once('error', errorListener);
+      addErrorHandlerIfEventEmitter(emitter, errorListener, { once: true });
     }
-
-    emitter.once(name, eventListener);
   });
+}
+
+function addErrorHandlerIfEventEmitter(emitter, handler, flags) {
+  if (typeof emitter.on === 'function') {
+    eventTargetAgnosticAddListener(emitter, 'error', handler, flags);
+  }
+}
+
+function eventTargetAgnosticAddListener(emitter, name, listener, flags) {
+  if (typeof emitter.on === 'function') {
+    if (flags.once) {
+      emitter.once(name, listener);
+    } else {
+      emitter.on(name, listener);
+    }
+  } else if (typeof emitter.addEventListener === 'function') {
+    // EventTarget does not have `error` event semantics like Node
+    // EventEmitters, we do not listen for `error` events here.
+    emitter.addEventListener(name, function wrapListener(arg) {
+      // IE does not have builtin `{ once: true }` support so we
+      // have to do it manually.
+      if (flags.once) {
+        emitter.removeEventListener(name, wrapListener);
+      }
+      listener(arg);
+    });
+  } else {
+    throw new TypeError('The "emitter" argument must be of type EventEmitter. Received type ' + typeof emitter);
+  }
 }
 
 
