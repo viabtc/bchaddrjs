@@ -299,6 +299,7 @@ function decodeCashAddressWithPrefix (address) {
     var type = decoded.type === 'P2PKH' ? Type.P2PKH : Type.P2SH
     switch (decoded.prefix) {
       case 'bitcoincash':
+      case 'ecash':
         return {
           hash: hash,
           format: Format.Cashaddr,

@@ -341,6 +341,7 @@ function decodeCashAddressWithPrefix(address) {
 
     switch (decoded.prefix) {
       case 'bitcoincash':
+      case 'ecash':
         return {
           hash: hash,
           format: Format.Cashaddr,
